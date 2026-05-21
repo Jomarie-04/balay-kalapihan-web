@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd balay-kalapihan-main && npm run build",
+  "installCommand": "cd balay-kalapihan-main && npm install",
+  "devCommand": "cd balay-kalapihan-main && npm run dev"
+}

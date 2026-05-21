@@ -1,4 +1,13 @@
 {
+  "name": "balay-kalapihan",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "cd balay-kalapihan-main && npm run dev",
+    "build": "cd balay-kalapihan-main && npm run build",
+    "preview": "cd balay-kalapihan-main && npm run preview",
+    "start": "cd balay-kalapihan-main && npm run preview"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4"
   }
