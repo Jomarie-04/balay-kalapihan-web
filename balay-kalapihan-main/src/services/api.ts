@@ -21,8 +21,9 @@ class BalayKalapihanAPI {
   }
 
   async request(endpoint: string, options: any = {}) {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const url = `${apiUrl}/api${endpoint}`;
+    // Use relative API path for both local and production environments
+    const baseUrl = import.meta.env.VITE_API_URL || '/api';
+    const url = `${baseUrl}${endpoint}`;
     const config = {
       ...options,
       headers: this.getHeaders(options.includeAuth !== false),
