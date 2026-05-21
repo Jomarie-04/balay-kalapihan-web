@@ -1,5 +1,6 @@
 {
   "buildCommand": "cd balay-kalapihan-main && npm run build",
   "installCommand": "cd balay-kalapihan-main && npm install",
-  "devCommand": "cd balay-kalapihan-main && npm run dev"
+  "devCommand": "cd balay-kalapihan-main && npm run dev",
+  "outputDirectory": "balay-kalapihan-main/dist"
 }
