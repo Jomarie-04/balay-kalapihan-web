@@ -32,13 +32,17 @@ router.post('/', async (req, res) => {
         items,
         total,
         status: 'pending',
-        userid: customerId || null,
-        phonenumber: phoneNumber || null,
+        user_id: customerId || null,
+        phone_number: phoneNumber || null,
         time: pickupTime || null,
         payment_method: paymentMethod || null,
         reference_number: referenceNumber || null,
         pickup_date: pickupDate || null,
-        pickup_time: pickupTime || null
+        pickup_time: pickupTime || null,
+        total_amount: total || null,
+        subtotal_amount: subtotal || null,
+        discount: discount || null,
+        tax: tax || null
       });
 
     if (orderError) {

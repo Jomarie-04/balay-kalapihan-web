@@ -689,7 +689,7 @@ export function Dashboard({
                 console.log('[ORDER_SYNC] Order status updated from API:', customerOrders);
                 // Update localStorage to keep local state in sync
                 const formattedOrders = customerOrders.map((order: any) => {
-                  const createdAt = new Date(order.createdat);
+                  const createdAt = new Date(order.created_at);
                   // Calculate cancel deadline: 5 minutes from order creation if still pending
                   const cancelDeadline = order.status === 'pending' 
                     ? new Date(createdAt.getTime() + 5 * 60 * 1000)

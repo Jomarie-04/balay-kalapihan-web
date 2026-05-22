@@ -55,6 +55,14 @@ async function createSchema() {
         status VARCHAR(50) DEFAULT 'pending',
         time VARCHAR(50),
         phone_number VARCHAR(20),
+        total_amount INTEGER,
+        subtotal_amount INTEGER,
+        discount INTEGER DEFAULT 0,
+        tax INTEGER DEFAULT 0,
+        payment_method VARCHAR(50),
+        reference_number VARCHAR(255),
+        pickup_date VARCHAR(50),
+        pickup_time VARCHAR(50),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );

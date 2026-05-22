@@ -39,9 +39,9 @@ router.post('/signup', async (req, res) => {
       .insert({
         username,
         email,
-        fullname: fullName,
+        full_name: fullName,
         password: hashedPassword,
-        phonenumber: phoneNumber || null
+        phone_number: phoneNumber || null
       })
       .select();
 
@@ -86,7 +86,7 @@ router.post('/login', async (req, res) => {
     // Get user from database
     const { data: users, error: selectError } = await supabase
       .from('customers')
-      .select('id, username, email, fullname, password')
+      .select('id, username, email, full_name, password')
       .eq('username', username)
       .limit(1);
 
@@ -106,12 +106,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateToken(user.id, user.username, user.fullname);
+    const token = generateToken(user.id, user.username, user.full_name);
 
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, username: user.username, email: user.email, fullName: user.fullname }
+      user: { id: user.id, username: user.username, email: user.email, fullName: user.full_name }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -137,7 +137,7 @@ router.get('/profile', async (req, res) => {
 
     const { data: users, error: selectError } = await supabase
       .from('customers')
-      .select('id, username, email, fullname, phonenumber, createdAt')
+      .select('id, username, email, full_name, phone_number, created_at')
       .eq('id', req.userId)
       .limit(1);
 
@@ -149,7 +149,14 @@ router.get('/profile', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(users[0]);
+    res.json({
+      id: users[0].id,
+      username: users[0].username,
+      email: users[0].email,
+      fullName: users[0].full_name,
+      phoneNumber: users[0].phone_number,
+      createdAt: users[0].created_at
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -168,8 +175,8 @@ router.put('/profile', async (req, res) => {
       .from('customers')
       .update({
         email,
-        fullname: fullName,
-        phonenumber: phoneNumber
+        full_name: fullName,
+        phone_number: phoneNumber
       })
       .eq('id', req.userId);
 
