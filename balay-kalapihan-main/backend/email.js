@@ -4,12 +4,27 @@ import PDFDocument from 'pdfkit';
 
 dotenv.config();
 
+const gmailUser = process.env.GMAIL_USER;
+const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+console.log('Email service configuration:');
+console.log('  GMAIL_USER configured:', Boolean(gmailUser));
+console.log('  GMAIL_APP_PASSWORD configured:', Boolean(gmailPass));
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    user: gmailUser,
+    pass: gmailPass,
   },
+});
+
+transporter.verify().then(() => {
+  console.log('Mail transporter verified successfully');
+}).catch((verificationError) => {
+  console.error('Mail transporter verification failed:', verificationError?.message || verificationError);
 });
 
 export async function sendResetCodeEmail(to, code) {

@@ -140,9 +140,14 @@ router.post('/forgot-password', async (req, res) => {
 
     const code = generateResetCode();
     await storeResetCode(normalizedEmail, code);
-    await sendResetCodeEmail(normalizedEmail, code);
+    const emailResult = await sendResetCodeEmail(normalizedEmail, code);
 
     console.log(`Password reset code for ${normalizedEmail}: ${code}`);
+
+    if (!emailResult.success) {
+      console.error('Failed to send password reset email:', emailResult.reason);
+      return res.status(500).json({ error: 'Failed to send verification code email', reason: emailResult.reason });
+    }
 
     res.json({ message: 'Verification code sent to your email', email: normalizedEmail });
   } catch (err) {

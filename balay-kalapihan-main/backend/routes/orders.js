@@ -214,23 +214,23 @@ router.post('/', async (req, res) => {
     });
 
     if (customerEmail) {
-      try {
-        const invoiceItems = Array.isArray(orderItems) && orderItems.length > 0 ? orderItems : (Array.isArray(items) ? items : []);
-        await sendInvoiceEmail({
-          to: customerEmail,
-          orderId,
-          customerName: customer,
-          totalAmount: Number(total || 0),
-          subtotalAmount: Number(subtotal || 0),
-          paymentMethod,
-          referenceNumber,
-          pickupDate,
-          pickupTime,
-          items: invoiceItems,
-          createdAt: new Date().toISOString(),
-        });
-      } catch (invoiceError) {
-        console.error('Could not send invoice email:', invoiceError);
+      const invoiceItems = Array.isArray(orderItems) && orderItems.length > 0 ? orderItems : (Array.isArray(items) ? items : []);
+      const invoiceResult = await sendInvoiceEmail({
+        to: customerEmail,
+        orderId,
+        customerName: customer,
+        totalAmount: Number(total || 0),
+        subtotalAmount: Number(subtotal || 0),
+        paymentMethod,
+        referenceNumber,
+        pickupDate,
+        pickupTime,
+        items: invoiceItems,
+        createdAt: new Date().toISOString(),
+      });
+
+      if (!invoiceResult.success) {
+        console.error('Could not send invoice email:', invoiceResult.reason);
       }
     }
 
