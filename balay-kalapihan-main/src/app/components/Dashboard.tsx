@@ -13,10 +13,10 @@ import { AboutUs } from "./AboutUs";
 import { UserData } from "./Login";
 import { SalesInvoice } from "./SalesInvoice";
 import { CancelOrderModal } from "./CancelOrderModal";
-import { ShopStatusIndicator } from "./ShopStatusIndicator";
 import { ReadyNotification } from "./ReadyNotification";
 import { Footer } from "./Footer";
 import { api } from "../../services/api";
+import { getMenuImageSrc } from "./menuImage";
 import {
   Search,
   Home,
@@ -54,6 +54,7 @@ interface CartItem {
 }
 
 interface Order {
+  id?: string;
   orderNumber: string;
   customer: string;
   totalAmount: number;
@@ -66,6 +67,8 @@ interface Order {
   items: CartItem[];
   status:
     | "pending"
+    | "pending_verification"
+    | "paid"
     | "confirmed"
     | "preparing"
     | "ready"
@@ -77,7 +80,13 @@ interface Order {
 
 interface Notification {
   id: string;
-  type: 'order_placed' | 'order_ready' | 'order_completed' | 'order_preparing';
+  type:
+    | 'order_placed'
+    | 'order_ready'
+    | 'order_completed'
+    | 'order_preparing'
+    | 'item_available'
+    | 'item_unavailable';
   message: string;
   orderNumber?: string;
   timestamp: number;
@@ -383,6 +392,7 @@ export function Dashboard({
   const readyOrdersShown = useRef<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [previousOrderIds, setPreviousOrderIds] = useState<Set<string>>(new Set());
+  const previousMenuAvailability = useRef<Record<number, boolean>>({});
 
   // Request notification permission on mount
   useEffect(() => {
@@ -393,6 +403,191 @@ export function Dashboard({
     // Load notifications on mount
     loadNotifications();
   }, []);
+
+  const getOrderIdentityValues = (order: any) => {
+    return [order?.id, order?.orderNumber, order?.order_number, order?.orderId]
+      .filter(Boolean)
+      .map((value) => String(value));
+  };
+
+  const findMatchingOrder = (ordersToSearch: any[], candidate: any) => {
+    const candidateKeys = getOrderIdentityValues(candidate);
+    return ordersToSearch.find((existingOrder: any) => {
+      const existingKeys = getOrderIdentityValues(existingOrder);
+      return candidateKeys.some((key) => existingKeys.includes(key));
+    });
+  };
+
+  const persistCustomerOrders = (ordersToSave: Order[]) => {
+    const storageKeys = [userData.username, userData.fullName]
+      .filter(Boolean)
+      .map((value) => `userOrders_${value}`);
+
+    Array.from(new Set(storageKeys)).forEach((storageKey) => {
+      localStorage.setItem(storageKey, JSON.stringify(ordersToSave));
+    });
+  };
+
+  const canCancelOrder = (order: Order) => {
+    if (order.status !== 'pending' || !order.cancelDeadline) return false;
+
+    const deadline = new Date(order.cancelDeadline);
+    return !Number.isNaN(deadline.getTime()) && deadline.getTime() > Date.now();
+  };
+
+  const resolveOrderIdFromBackend = async (orderLookup?: string) => {
+    if (!orderLookup) return null;
+
+    try {
+      const backendOrders = await api.getMyOrders(userData.fullName || userData.username);
+      if (!Array.isArray(backendOrders)) return null;
+
+      const matchingOrder = backendOrders.find((candidate: any) => {
+        const candidateId = candidate.id || candidate.orderId || candidate.orderNumber || candidate.order_number;
+        return candidateId === orderLookup;
+      });
+
+      return matchingOrder?.id || matchingOrder?.orderId || null;
+    } catch (error) {
+      console.warn('[ORDER_CANCELLATION] Could not resolve backend order id:', error);
+      return null;
+    }
+  };
+
+  const syncCustomerOrdersFromBackend = async () => {
+    try {
+      const freshOrders = await api.getMyOrders(userData.fullName || userData.username);
+      if (!Array.isArray(freshOrders) || freshOrders.length === 0) {
+        return;
+      }
+
+      const normalizedOrders = freshOrders.map((order: any) => {
+        const createdAt = new Date(order.created_at || order.createdAt || Date.now());
+        const cancelDeadline = order.status === 'pending'
+          ? new Date(createdAt.getTime() + 60 * 1000)
+          : undefined;
+
+        const normalizedItems = Array.isArray(order.items)
+          ? order.items.map((item: any) => {
+              const resolvedItem = item?.item ?? item?.menu_items ?? item?.menuItem ?? item?.menu_item ?? null;
+              const matchingMenuItem = menuItems.find((candidate) => String(candidate.id) === String(resolvedItem?.id ?? item?.menuItemId ?? item?.menu_item_id ?? ''));
+              const resolvedName = item?.name || resolvedItem?.name || matchingMenuItem?.name || item?.menuItemName || item?.menu_item_name || 'Unknown item';
+              return {
+                ...item,
+                item: resolvedItem,
+                name: resolvedName,
+                quantity: item?.quantity ?? 1,
+              };
+            })
+          : [];
+
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber || order.order_number || order.id,
+          customer: order.customer || userData.fullName,
+          totalAmount: order.total_amount ?? order.totalAmount ?? 0,
+          subtotalAmount: order.subtotal_amount ?? order.subtotalAmount ?? 0,
+          discount: order.discount ?? 0,
+          paymentMethod: order.payment_method || order.paymentMethod || order.paymentmethod || '',
+          referenceNumber: order.reference_number || order.referenceNumber || order.referencenumber || '',
+          pickupDate: order.pickup_date || order.pickupDate || '',
+          pickupTime: order.pickup_time || order.pickupTime || '',
+          items: normalizedItems,
+          status: order.status,
+          createdAt,
+          cancelDeadline,
+        };
+      });
+
+      setOrders(normalizedOrders as Order[]);
+      persistCustomerOrders(normalizedOrders as Order[]);
+      console.log('[DASHBOARD_SYNC] Synced', normalizedOrders.length, 'orders from backend');
+    } catch (error) {
+      console.error('[DASHBOARD_SYNC] Error syncing orders from backend:', error);
+    }
+  };
+
+  const loadStoredCustomerOrders = () => {
+    const storageKeys = [userData.username, userData.fullName]
+      .filter(Boolean)
+      .map((value) => `userOrders_${value}`);
+
+    const loadedOrders = storageKeys.flatMap((storageKey) => {
+      const storedOrders = localStorage.getItem(storageKey);
+      if (!storedOrders) return [];
+
+      try {
+        const parsed = JSON.parse(storedOrders);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error(`[DASHBOARD_INIT] Error loading orders from ${storageKey}:`, e);
+        return [];
+      }
+    });
+
+    if (loadedOrders.length === 0) return [];
+
+    return loadedOrders.reduce((acc: any[], order: any) => {
+      const orderIdentityValues = getOrderIdentityValues(order);
+      if (orderIdentityValues.length === 0) return acc;
+
+      const existingIndex = acc.findIndex((candidate: any) => {
+        const candidateKeys = getOrderIdentityValues(candidate);
+        return orderIdentityValues.some((key) => candidateKeys.includes(key));
+      });
+
+      if (existingIndex >= 0) {
+        acc[existingIndex] = {
+          ...acc[existingIndex],
+          ...order,
+          items: Array.isArray(order.items)
+            ? order.items.map((item: any) => {
+                const resolvedItem = item?.item ?? item?.menu_items ?? item?.menuItem ?? item?.menu_item ?? null;
+                const matchingMenuItem = menuItems.find((candidate) => String(candidate.id) === String(resolvedItem?.id ?? item?.menuItemId ?? item?.menu_item_id ?? ''));
+                const resolvedName = item?.name || resolvedItem?.name || matchingMenuItem?.name || item?.menuItemName || item?.menu_item_name || 'Unknown item';
+                return {
+                  ...item,
+                  item: resolvedItem,
+                  name: resolvedName,
+                  quantity: item?.quantity ?? 1,
+                };
+              })
+            : []
+        };
+        return acc;
+      }
+
+      acc.push({
+        ...order,
+        items: Array.isArray(order.items)
+          ? order.items.map((item: any) => {
+              const resolvedItem = item?.item ?? item?.menu_items ?? item?.menuItem ?? item?.menu_item ?? null;
+              const matchingMenuItem = menuItems.find((candidate) => String(candidate.id) === String(resolvedItem?.id ?? item?.menuItemId ?? item?.menu_item_id ?? ''));
+              const resolvedName = item?.name || resolvedItem?.name || matchingMenuItem?.name || item?.menuItemName || item?.menu_item_name || 'Unknown item';
+              return {
+                ...item,
+                item: resolvedItem,
+                name: resolvedName,
+                quantity: item?.quantity ?? 1,
+              };
+            })
+          : []
+      });
+      return acc;
+    }, []);
+  };
+
+  // Load orders from localStorage on mount, then sync from the backend database
+  useEffect(() => {
+    const storedOrders = loadStoredCustomerOrders();
+    if (storedOrders.length > 0) {
+      setOrders(storedOrders);
+      persistCustomerOrders(storedOrders);
+      console.log('[DASHBOARD_INIT] Loaded', storedOrders.length, 'orders from localStorage');
+    }
+
+    void syncCustomerOrdersFromBackend();
+  }, [userData.username, userData.fullName]);
 
   // Detect customer order status changes and create notifications
   useEffect(() => {
@@ -470,7 +665,7 @@ export function Dashboard({
                 price: item.price,
                 category: item.category,
                 available: item.status === 'available',
-                image: item.image || hardcodedItem?.image || '/images/default.jpg'
+                image: item.image || hardcodedItem?.image || '/images/kipin-logo.png'
               };
             });
           }
@@ -498,13 +693,58 @@ export function Dashboard({
                 price: item.price,
                 category: item.category,
                 available: item.status === 'available',
-                image: item.image || hardcodedItem?.image || '/images/default.jpg'
+                image: item.image || hardcodedItem?.image || '/images/kipin-logo.png'
               };
             });
             updatedItems = [...updatedItems, ...formattedCustomItems];
           } catch (error) {
             console.error('Error parsing custom menu items:', error);
           }
+        }
+
+        // Apply any manual menu status overrides from localStorage
+        const menuStatusRaw = localStorage.getItem('menuItemStatus');
+        if (menuStatusRaw) {
+          try {
+            const menuStatus = JSON.parse(menuStatusRaw);
+            updatedItems = updatedItems.map((item) => {
+              const overrideStatus = menuStatus[String(item.id)];
+              if (overrideStatus === 'available' || overrideStatus === 'unavailable') {
+                return { ...item, available: overrideStatus === 'available' };
+              }
+              return item;
+            });
+          } catch (error) {
+            console.error('Error parsing menuItemStatus from localStorage:', error);
+          }
+        }
+
+        const oldAvailability = { ...previousMenuAvailability.current };
+        const availabilityChanges: Notification[] = [];
+
+        updatedItems.forEach((item) => {
+          if (oldAvailability.hasOwnProperty(item.id)) {
+            const wasAvailable = oldAvailability[item.id];
+            if (item.available !== wasAvailable) {
+              availabilityChanges.push({
+                id: `menu_${item.id}_${Date.now()}`,
+                type: item.available ? 'item_available' : 'item_unavailable',
+                message: item.available
+                  ? `📦 "${item.name}" is now available.`
+                  : `❌ "${item.name}" is now unavailable.`,
+                timestamp: Date.now(),
+                read: false,
+              });
+            }
+          }
+        });
+
+        previousMenuAvailability.current = Object.fromEntries(
+          updatedItems.map((item) => [item.id, item.available]),
+        );
+
+        if (availabilityChanges.length > 0) {
+          availabilityChanges.forEach((notif) => addNotification(notif.message, notif.type));
         }
         
         setDisplayMenuItems(updatedItems);
@@ -518,8 +758,7 @@ export function Dashboard({
 
     // Listen for changes from admin dashboard (real-time sync across tabs)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'menuAvailability' || e.key === 'customMenuItems') {
-        updateMenuItems();
+      if (e.key === 'menuAvailability' || e.key === 'menuItemStatus' || e.key === 'customMenuItems') {
       }
     };
 
@@ -633,100 +872,78 @@ export function Dashboard({
   // Listen for real-time order updates from admin dashboard
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === userOrdersKey && e.newValue) {
+      if (!e.key?.startsWith('userOrders_') || !e.newValue) return;
+
+      try {
         const updatedOrders = JSON.parse(e.newValue);
-        setOrders(updatedOrders);
+        if (!Array.isArray(updatedOrders)) return;
+
+        const normalizedOrders = updatedOrders.map((order: any) => ({
+          ...order,
+          items: Array.isArray(order.items) ? order.items : []
+        }));
+        setOrders(normalizedOrders);
+      } catch (error) {
+        console.warn('[ORDER_SYNC] Error applying storage update:', error);
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Poll localStorage for updates every 3 seconds (for same-tab updates from admin dashboard)
-    const pollLocalStorageInterval = setInterval(() => {
-      const updatedOrders = localStorage.getItem(userOrdersKey);
-      if (updatedOrders) {
-        const parsed = JSON.parse(updatedOrders);
-        // Restore cancelDeadline if missing (after page refresh)
-        const ordersWithDeadlines = parsed.map((order: any) => {
-          if (!order.cancelDeadline && order.status === 'pending' && order.createdAt) {
-            const createdAt = new Date(order.createdAt);
-            return {
-              ...order,
-              cancelDeadline: new Date(createdAt.getTime() + 5 * 60 * 1000)
-            };
-          }
-          return order;
-        });
-        
-        setOrders(prev => {
-          // Only update if orders have changed (to avoid unnecessary re-renders)
-          if (JSON.stringify(prev) !== JSON.stringify(ordersWithDeadlines)) {
-            return ordersWithDeadlines;
-          }
-          return prev;
-        });
-      }
-    }, 3000);
-
-    // Poll API for fresh order data every 5 seconds to catch admin updates
+    // Poll API for fresh order data every 3 seconds to catch admin updates
     const pollAPIInterval = setInterval(async () => {
       try {
-        if (orders.length > 0) {
-          const freshOrders = await api.getMyOrders();
-          if (freshOrders && Array.isArray(freshOrders)) {
-            // Backend now returns only customer's orders, no need to filter
-            const customerOrders = freshOrders;
-            
-            // Check if any order status has changed
-            setOrders(prev => {
-              const hasChanges = customerOrders.length !== prev.length ||
-                customerOrders.some((newOrder: any) => {
-                  const oldOrder = prev.find(o => o.orderNumber === newOrder.id);
-                  return oldOrder && oldOrder.status !== newOrder.status;
-                });
-              
-              if (hasChanges && customerOrders.length > 0) {
-                console.log('[ORDER_SYNC] Order status updated from API:', customerOrders);
-                // Update localStorage to keep local state in sync
-                const formattedOrders = customerOrders.map((order: any) => {
-                  const createdAt = new Date(order.created_at);
-                  // Calculate cancel deadline: 5 minutes from order creation if still pending
-                  const cancelDeadline = order.status === 'pending' 
-                    ? new Date(createdAt.getTime() + 5 * 60 * 1000)
-                    : undefined;
-                  
-                  return {
-                    orderNumber: order.id,
-                    customer: order.customer,
-                    totalAmount: order.total_amount,
-                    subtotalAmount: order.subtotal_amount,
-                    discount: order.discount,
-                    paymentMethod: order.payment_method,
-                    referenceNumber: order.reference_number,
-                    pickupDate: order.pickup_date,
-                    pickupTime: order.pickup_time,
-                    items: order.items || [],
-                    status: order.status,
-                    createdAt: createdAt,
-                    cancelDeadline: cancelDeadline,
-                  };
-                });
-                localStorage.setItem(userOrdersKey, JSON.stringify(formattedOrders));
-                return formattedOrders;
-              }
-              return prev;
+        const freshOrders = await api.getMyOrders(userData.fullName || userData.username);
+        if (freshOrders && Array.isArray(freshOrders)) {
+          const customerOrders = freshOrders;
+
+          setOrders(prev => {
+            const formattedOrders = customerOrders.map((order: any) => {
+              const matchingLocalOrder = findMatchingOrder(prev, order);
+              const createdAt = new Date(order.created_at || order.createdAt || Date.now());
+              const cancelDeadline = order.status === 'pending'
+                ? new Date(createdAt.getTime() + 60 * 1000)
+                : undefined;
+
+              return {
+                id: order.id,
+                orderNumber: matchingLocalOrder?.orderNumber || order.order_number || order.orderNumber || order.id,
+                customer: matchingLocalOrder?.customer || order.customer || userData.fullName,
+                totalAmount: order.total_amount ?? order.totalAmount ?? 0,
+                subtotalAmount: order.subtotal_amount ?? order.subtotalAmount ?? 0,
+                discount: order.discount ?? 0,
+                paymentMethod: order.payment_method || order.paymentMethod || order.paymentmethod || '',
+                referenceNumber: order.reference_number || order.referenceNumber || order.referencenumber || '',
+                pickupDate: order.pickup_date || order.pickupDate || '',
+                pickupTime: order.pickup_time || order.pickupTime || '',
+                items: Array.isArray(order.items) ? order.items : (matchingLocalOrder?.items || []),
+                status: order.status,
+                createdAt: createdAt,
+                cancelDeadline: cancelDeadline,
+              };
             });
-          }
+
+            const hasChanges = formattedOrders.length !== prev.length || formattedOrders.some((updatedOrder, index) => {
+              const previousOrder = prev[index];
+              return !previousOrder || previousOrder.status !== updatedOrder.status || previousOrder.orderNumber !== updatedOrder.orderNumber;
+            });
+
+            if (hasChanges) {
+              console.log('[ORDER_SYNC] Order status updated from API:', formattedOrders);
+              persistCustomerOrders(formattedOrders as Order[]);
+              return formattedOrders;
+            }
+
+            return prev;
+          });
         }
       } catch (error) {
         console.warn('[ORDER_SYNC] Error polling for order updates:', error);
-        // Silently fail - continue using localStorage data
       }
-    }, 5000);
+    }, 3000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(pollLocalStorageInterval);
       clearInterval(pollAPIInterval);
     };
   }, [userData.username, userData.fullName, userOrdersKey, orders.length]);
@@ -829,12 +1046,15 @@ export function Dashboard({
   const handlePaymentConfirm = async (
     paymentMethod: string,
     referenceNumber: string,
+    proofFile?: File,
   ) => {
     const orderNumber = `BK${Date.now().toString().slice(-6)}`;
     const itemsSnapshot = cart;
-    const cancelDeadline = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    const cancelDeadline = new Date(Date.now() + 60 * 1000); // 1 minute from now
+    let backendOrderId: string | undefined;
 
     const newOrder: Order = {
+      id: backendOrderId,
       orderNumber,
       customer: userData.fullName,
       totalAmount,
@@ -850,7 +1070,7 @@ export function Dashboard({
         minute: "2-digit",
       }),
       items: itemsSnapshot,
-      status: "pending",
+      status: "pending", // Using 'pending' for orders with payment verification
       createdAt: new Date(),
       cancelDeadline: cancelDeadline,
     };
@@ -864,7 +1084,32 @@ export function Dashboard({
         notes: item.specialInstructions || '',
       }));
 
-      // Send order to backend API
+      // Upload proof file if provided
+      let proofImagePath = null;
+      if (proofFile) {
+        const formData = new FormData();
+        formData.append('file', proofFile);
+        formData.append('orderNumber', orderNumber);
+        
+        try {
+          const uploadResponse = await fetch('/api/payment-proof-upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            proofImagePath = uploadData.filePath;
+          } else {
+            console.error('Failed to upload proof image');
+          }
+        } catch (uploadError) {
+          console.error('Proof image upload error:', uploadError);
+          // Continue with order creation even if proof upload fails
+        }
+      }
+
+      // Send order to backend API with payment verification data
       const response = await api.createOrder(
         userData.fullName,
         itemsSnapshot.length,
@@ -880,26 +1125,36 @@ export function Dashboard({
         0, // tax - currently 0
         undefined,
         new Date(pickupDate + 'T' + pickupTime).toISOString(),
-        userData.id || undefined
+        userData.id || undefined,
+        userData.email || undefined,
+        proofImagePath, // Pass proof image path
+        "pending" // Pass status for payment verification
       );
-      console.log('Order sent to backend:', response);
+      backendOrderId = response?.orderId || response?.order?.id;
+      console.log('Order sent to backend with payment verification:', response);
     } catch (error) {
       console.error('Failed to send order to backend:', error);
       // Still save locally even if API fails
     }
 
-    setCurrentOrder(newOrder);
-    setOrders([newOrder, ...orders]);
+    const orderWithBackendId: Order = {
+      ...newOrder,
+      id: backendOrderId,
+    };
+
+    setCurrentOrder(orderWithBackendId);
+    setOrders([orderWithBackendId, ...orders]);
     
     // Save orders to user-specific localStorage
-    const allOrders = [newOrder, ...orders];
-    const userOrdersKey = `userOrders_${userData.username}`;
-    localStorage.setItem(userOrdersKey, JSON.stringify(allOrders));
+    const allOrders = [orderWithBackendId, ...orders];
+    persistCustomerOrders(allOrders);
     
     setShowPaymentModal(false);
     setShowOrderConfirmation(true);
     setShowInvoice(true); // Show invoice after confirmation
     setCart([]);
+
+    await syncCustomerOrdersFromBackend();
   };
 
   const handleCloseConfirmation = () => {
@@ -909,37 +1164,40 @@ export function Dashboard({
 
   const handleCancelOrder = (orderNumber: string) => {
     const order = orders.find(o => o.orderNumber === orderNumber);
-    if (!order || !order.cancelDeadline) return;
+    if (!order || !canCancelOrder(order)) return;
 
+    const deadline = new Date(order.cancelDeadline!);
     const now = new Date();
-    const deadline = new Date(order.cancelDeadline);
     const timeRemaining = Math.max(0, Math.floor((deadline.getTime() - now.getTime()) / 1000));
 
-    if (timeRemaining > 0) {
-      setOrderToCancel(orderNumber);
-      setCancelTimeRemaining(timeRemaining);
-    }
+    setOrderToCancel(orderNumber);
+    setCancelTimeRemaining(timeRemaining);
   };
 
   const confirmCancelOrder = async () => {
     if (!orderToCancel) return;
 
+    const orderToCancelRecord = orders.find(order => order.orderNumber === orderToCancel || order.id === orderToCancel);
+    const resolvedBackendOrderId = await resolveOrderIdFromBackend(orderToCancelRecord?.id || orderToCancelRecord?.orderNumber);
+    const orderId = orderToCancelRecord?.id || resolvedBackendOrderId || orderToCancelRecord?.orderNumber;
+
+    if (!orderId) return;
+
     try {
-      // Call backend API to update order status in database
-      const response = await api.updateOrderStatus(orderToCancel, 'cancelled');
+      // Call backend API to update order status in database using the real backend order ID
+      const response = await api.updateOrderStatus(orderId, 'cancelled');
       console.log('[ORDER_CANCELLATION] API response:', response);
       
       // Update frontend state after successful API call
       const updated = orders.map(order =>
-        order.orderNumber === orderToCancel
+        order.orderNumber === orderToCancel || order.id === orderId
           ? { ...order, status: 'cancelled' as const, cancelDeadline: undefined }
           : order
       );
       setOrders(updated);
       
       // Persist cancellation to user-specific localStorage
-      const userOrdersKey = `userOrders_${userData.username}`;
-      localStorage.setItem(userOrdersKey, JSON.stringify(updated));
+      persistCustomerOrders(updated);
       
       console.log('[ORDER_CANCELLATION] Order', orderToCancel, 'marked as cancelled');
       
@@ -1020,7 +1278,6 @@ export function Dashboard({
                   <p className="text-xs text-muted-foreground hidden md:block">
                     Welcome, {userData.fullName}!
                   </p>
-                  <ShopStatusIndicator className="hidden md:flex" />
                 </div>
               </div>
               <div className="sm:hidden flex items-center gap-3">
@@ -1030,7 +1287,6 @@ export function Dashboard({
                 >
                   Balay Kalapihan
                 </h1>
-                <ShopStatusIndicator />
               </div>
             </div>
 
@@ -1578,7 +1834,9 @@ export function Dashboard({
                       'order_ready': 'bg-green-500/10 text-green-600 border-green-500/30',
                       'order_completed': 'bg-blue-500/10 text-blue-600 border-blue-500/30',
                       'order_preparing': 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
-                      'order_placed': 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                      'order_placed': 'bg-purple-500/10 text-purple-600 border-purple-500/30',
+                      'item_available': 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+                      'item_unavailable': 'bg-rose-500/10 text-rose-600 border-rose-500/30',
                     };
                     
                     const unreadClass = notification.read ? '' : ' bg-primary/5 border-primary/40';
@@ -1595,6 +1853,8 @@ export function Dashboard({
                             {notification.type === 'order_completed' && '✅'}
                             {notification.type === 'order_preparing' && '⏱️'}
                             {notification.type === 'order_placed' && '📦'}
+                            {notification.type === 'item_available' && '📦'}
+                            {notification.type === 'item_unavailable' && '🚫'}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`${notification.read ? "text-muted-foreground" : "font-semibold text-foreground"}`}>
@@ -1664,13 +1924,13 @@ export function Dashboard({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {orders.map(order => (
+                        {[...orders].reverse().map(order => (
                           <tr key={order.orderNumber} className="hover:bg-muted/30 transition-colors">
                             <td className="px-6 py-4 text-sm font-medium">{order.orderNumber}</td>
                             <td className="px-6 py-4 text-sm text-muted-foreground">
                               {new Date(order.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 text-sm text-muted-foreground">{order.paymentMethod}</td>
+                            <td className="px-6 py-4 text-sm text-muted-foreground">{order.paymentMethod || 'GCash'}</td>
                             <td className="px-6 py-4 text-sm font-medium">₱{order.totalAmount}</td>
                             <td className="px-6 py-4 text-sm">
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -1764,7 +2024,7 @@ export function Dashboard({
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Payment Method</p>
-                          <p className="font-medium text-foreground">{order.paymentMethod}</p>
+                          <p className="font-medium text-foreground">{order.paymentMethod || 'GCash'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Status</p>
@@ -1791,24 +2051,29 @@ export function Dashboard({
                           <div>
                             <p className="text-sm text-muted-foreground mb-2">Items ({order.items.length})</p>
                             <div className="space-y-1">
-                              {order.items.slice(0, 3).map((item, i) => (
-                                <p key={i} className="text-sm text-foreground">
-                                  {item.quantity}x {item.item.name}
-                                </p>
-                              ))}
+                              {order.items.slice(0, 3).map((item, i) => {
+                                const itemName = item?.item?.name || item?.name || 'Unknown item';
+                                const quantity = item?.quantity ?? 1;
+
+                                return (
+                                  <p key={`${order.orderNumber}-${i}`} className="text-sm text-foreground">
+                                    {quantity}x {itemName}
+                                  </p>
+                                );
+                              })}
                               {order.items.length > 3 && (
                                 <p className="text-sm text-muted-foreground">+{order.items.length - 3} more items</p>
                               )}
                             </div>
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-                            {order.status === 'pending' && order.cancelDeadline && (orderCountdowns[order.orderNumber] || 0) > 0 ? (
+                            {canCancelOrder(order) ? (
                               <>
                                 <button
                                   onClick={() => handleCancelOrder(order.orderNumber)}
                                   className="flex-1 sm:flex-none px-4 py-2 bg-destructive/20 text-destructive rounded-lg hover:bg-destructive/30 transition-all text-sm font-medium"
                                 >
-                                  Cancel Order ({formatTimeRemaining(orderCountdowns[order.orderNumber] || 0)})
+                                  Cancel Order {orderCountdowns[order.orderNumber] ? `(${formatTimeRemaining(orderCountdowns[order.orderNumber])})` : ''}
                                 </button>
                               </>
                             ) : order.status === 'pending' ? (
@@ -2117,49 +2382,49 @@ export function Dashboard({
                   >
                     Our Menu
                   </h2>
-                  <p className="text-xs sm:text-sm md:text-base text-primary/70">
+                  <p className="text-sm sm:text-base text-primary/80 max-w-2xl">
                     Explore our delicious coffee selection
                   </p>
                 </div>
 
-                {/* Search Bar */}
-                <div className="mb-6 sm:mb-8 md:mb-10 pb-4 sm:pb-6 border-b border-primary/40">
-                  <div className="relative">
-                    <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/60" />
+                <div className="mb-8 flex flex-col gap-8 lg:gap-10">
+                  {/* Search Bar */}
+                  <div className="w-full lg:max-w-2xl relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/70" />
                     <input
                       type="text"
                       placeholder="Search for items..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 sm:pl-12 pr-4 sm:pr-5 py-2 sm:py-3 bg-foreground/20 border-2 border-primary/40 rounded-lg text-white placeholder:text-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 text-sm sm:text-base"
+                      className="w-full pl-12 pr-4 py-4 bg-foreground/20 border-2 border-primary/40 rounded-2xl text-white placeholder:text-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-base"
                     />
                   </div>
-                </div>
 
-                {/* Category Filter */}
-                <div className="mb-6 sm:mb-8 md:mb-10 pb-4 sm:pb-6 border-b border-primary/40">
-                  <h3 className="text-xs sm:text-sm font-semibold text-primary/80 mb-3 sm:mb-4 uppercase tracking-wide">Filter by Category</h3>
-                  <div className="flex gap-2 flex-wrap">
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() =>
-                          setSelectedCategory(category)
-                        }
-                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-300 text-xs sm:text-sm md:text-base font-medium ${
-                          selectedCategory === category
-                            ? "bg-primary text-white shadow-md border-2 border-primary"
-                            : "bg-foreground/20 border-2 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary"
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
+                  {/* Category Filter */}
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-primary mb-3 uppercase tracking-[0.35em]">
+                      Filter by Category
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium border ${
+                            selectedCategory === category
+                              ? "bg-primary text-white border-primary shadow-md"
+                              : "bg-foreground/20 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary"
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 {/* Menu Items Grid - Responsive Columns */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-5">
                   {filteredItems.length === 0 ? (
                     <div className="col-span-full text-center py-12">
                       <p className="text-primary/70">
@@ -2170,17 +2435,17 @@ export function Dashboard({
                     filteredItems.map((item, index) => (
                       <div
                         key={item.id}
-                        className="bg-foreground/10 border-2 border-primary/40 rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] group hover:border-primary backdrop-blur-sm"
+                        className="bg-foreground/10 border-2 border-primary/40 rounded-[2rem] overflow-hidden shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-1"
                         style={{
                           animation: `fade-in-up 0.5s ease-out ${index * 0.1}s both`,
                         }}
                       >
                         {/* Item Image */}
-                        <div className="relative aspect-square overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#4A3728' }}>
+                        <div className="relative aspect-[4/3] overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#4A3728' }}>
                           <img
-                            src={item.image}
+                            src={getMenuImageSrc(item.name, item.image)}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className={`w-full h-full object-cover transition-all duration-300 ${!item.available ? 'filter grayscale' : ''}`}
                             loading="lazy"
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
@@ -2189,22 +2454,14 @@ export function Dashboard({
                               }
                             }}
                           />
-                          {!item.available && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="bg-foreground/10 px-4 py-2 rounded-lg text-sm font-medium text-white border border-primary/40">
-                                Unavailable
-                              </span>
-                            </div>
-                          )}
                         </div>
 
-                        <div className="p-3 sm:p-4 md:p-5">
-                          <div className="mb-2 sm:mb-3">
+                        <div className="p-4 sm:p-5">
+                          <div className="mb-3">
                             <h3
                               className="text-sm sm:text-base md:text-lg mb-0.5 sm:mb-1 group-hover:text-accent transition-colors line-clamp-2 break-words text-white"
                               style={{
-                                fontFamily:
-                                  "var(--font-display)",
+                                fontFamily: "var(--font-display)",
                               }}
                             >
                               {item.name}
@@ -2213,19 +2470,19 @@ export function Dashboard({
                               {item.description}
                             </p>
                           </div>
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-3">
                             <span className="text-lg sm:text-xl md:text-2xl text-accent font-bold">
                               ₱{item.price}
                             </span>
                             {item.available ? (
                               <button
                                 onClick={() => addToCart(item)}
-                                className="bg-primary text-white px-6 py-2 rounded-md hover:bg-accent transition-all duration-300 hover:scale-[1.05] active:scale-[0.95] shadow-md text-xs sm:text-sm font-medium w-fit"
+                                className="bg-primary text-white px-6 py-2 rounded-full hover:bg-accent transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-md text-sm font-medium w-fit"
                               >
                                 Add
                               </button>
                             ) : (
-                              <span className="text-sm text-primary/60 italic">
+                              <span className="text-sm text-muted-foreground italic">
                                 Out of Stock
                               </span>
                             )}

@@ -1,0 +1,336 @@
+{
+  "ORD-1782894523525": {
+    "paymentMethod": "Maya",
+    "referenceNumber": "REF-123",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "14:00",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiTWF5YSIsInJlZmVyZW5jZU51bWJlciI6IlJFRi0xMjMiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIxNDowMCIsInN1YnRvdGFsIjoxMDAsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782921132911": {
+    "paymentMethod": "maya",
+    "referenceNumber": "9360122193636",
+    "pickupDate": "2026-07-01",
+    "pickupTime": "00:21",
+    "subtotal": 105,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IjkzNjAxMjIxOTM2MzYiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMSIsInBpY2t1cFRpbWUiOiIwMDoyMSIsInN1YnRvdGFsIjoxMDUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782921662402": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "REF1",
+    "pickupDate": "2026-07-01",
+    "pickupTime": "10:00",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJSRUYxIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDEiLCJwaWNrdXBUaW1lIjoiMTA6MDAiLCJzdWJ0b3RhbCI6MTAwLCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782921973798": {
+    "paymentMethod": "maya",
+    "referenceNumber": "4092708147825",
+    "pickupDate": "2026-07-01",
+    "pickupTime": "00:35",
+    "subtotal": 345,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IjQwOTI3MDgxNDc4MjUiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMSIsInBpY2t1cFRpbWUiOiIwMDozNSIsInN1YnRvdGFsIjozNDUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782923554706": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "T1",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "10:00",
+    "subtotal": 75,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJUMSIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAyIiwicGlja3VwVGltZSI6IjEwOjAwIiwic3VidG90YWwiOjc1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782923577638": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "T1",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "10:00",
+    "subtotal": 75,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJUMSIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAyIiwicGlja3VwVGltZSI6IjEwOjAwIiwic3VidG90YWwiOjc1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782923737366": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "T1",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "10:00",
+    "subtotal": 75,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJUMSIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAyIiwicGlja3VwVGltZSI6IjEwOjAwIiwic3VidG90YWwiOjc1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782924044345": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "T1",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "10:00",
+    "subtotal": 75,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJUMSIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAyIiwicGlja3VwVGltZSI6IjEwOjAwIiwic3VidG90YWwiOjc1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782924207282": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "T1",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "10:00",
+    "subtotal": 75,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJUMSIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAyIiwicGlja3VwVGltZSI6IjEwOjAwIiwic3VidG90YWwiOjc1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782926041703": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "abc",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "10:00",
+    "subtotal": 10,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJhYmMiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIxMDowMCIsInN1YnRvdGFsIjoxMCwiZGlzY291bnQiOjAsInRheCI6MH0="
+  },
+  "ORD-1782926136253": {
+    "paymentMethod": "maya",
+    "referenceNumber": "4142209817080",
+    "pickupDate": "2026-07-01",
+    "pickupTime": "01:42",
+    "subtotal": 85,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IjQxNDIyMDk4MTcwODAiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMSIsInBpY2t1cFRpbWUiOiIwMTo0MiIsInN1YnRvdGFsIjo4NSwiZGlzY291bnQiOjAsInRheCI6MH0="
+  },
+  "ORD-1782970766504": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "3189821695205",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "14:09",
+    "subtotal": 115,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIzMTg5ODIxNjk1MjA1IiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMTQ6MDkiLCJzdWJ0b3RhbCI6MTE1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782971239596": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "TEST-REF",
+    "pickupDate": "2026-07-03",
+    "pickupTime": "10:00",
+    "subtotal": 99,
+    "discount": 0,
+    "tax": null,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJURVNULVJFRiIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAzIiwicGlja3VwVGltZSI6IjEwOjAwIiwic3VidG90YWwiOjk5LCJkaXNjb3VudCI6MCwidGF4IjpudWxsfQ=="
+  },
+  "ORD-1782971324427": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "2491927110907",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "14:18",
+    "subtotal": 115,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIyNDkxOTI3MTEwOTA3IiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMTQ6MTgiLCJzdWJ0b3RhbCI6MTE1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782974359842": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "9776209188870",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "15:08",
+    "subtotal": 115,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiI5Nzc2MjA5MTg4ODcwIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMTU6MDgiLCJzdWJ0b3RhbCI6MTE1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782974361559": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "9776209188870",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "15:08",
+    "subtotal": 115,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiI5Nzc2MjA5MTg4ODcwIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMTU6MDgiLCJzdWJ0b3RhbCI6MTE1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782974363795": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "9776209188870",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "15:08",
+    "subtotal": 115,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiI5Nzc2MjA5MTg4ODcwIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMTU6MDgiLCJzdWJ0b3RhbCI6MTE1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1782989029383": {
+    "paymentMethod": "maya",
+    "referenceNumber": "4193978716499",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "19:12",
+    "subtotal": 125,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IjQxOTM5Nzg3MTY0OTkiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIxOToxMiIsInN1YnRvdGFsIjoxMjUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782989031567": {
+    "paymentMethod": "maya",
+    "referenceNumber": "4193978716499",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "19:12",
+    "subtotal": 125,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IjQxOTM5Nzg3MTY0OTkiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIxOToxMiIsInN1YnRvdGFsIjoxMjUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782989033763": {
+    "paymentMethod": "maya",
+    "referenceNumber": "4193978716499",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "19:12",
+    "subtotal": 125,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IjQxOTM5Nzg3MTY0OTkiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIxOToxMiIsInN1YnRvdGFsIjoxMjUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782989513927": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "2404288842963",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "19:21",
+    "subtotal": 90,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIyNDA0Mjg4ODQyOTYzIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMTk6MjEiLCJzdWJ0b3RhbCI6OTAsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782990974628": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "123456789",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "19:42",
+    "subtotal": 85,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIxMjM0NTY3ODkiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIxOTo0MiIsInN1YnRvdGFsIjo4NSwiZGlzY291bnQiOjAsInRheCI6MH0="
+  },
+  "ORD-1782992700583": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "1234556799",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "20:09",
+    "subtotal": 95,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIxMjM0NTU2Nzk5IiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMjA6MDkiLCJzdWJ0b3RhbCI6OTUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782993266921": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "TXN20260702001",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "20:22",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJUWE4yMDI2MDcwMjAwMSIsInBpY2t1cERhdGUiOiIyMDI2LTA3LTAyIiwicGlja3VwVGltZSI6IjIwOjIyIiwic3VidG90YWwiOjEwMCwiZGlzY291bnQiOjAsInRheCI6MH0="
+  },
+  "ORD-1782993719794": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "TEST20260702002",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "20:28",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJURVNUMjAyNjA3MDIwMDIiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIyMDoyOCIsInN1YnRvdGFsIjoxMDAsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782994374029": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "TEST-DIRECT-002",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "21:00",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJURVNULURJUkVDVC0wMDIiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIyMTowMCIsInN1YnRvdGFsIjoxMDAsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782994434802": {
+    "paymentMethod": "GCash",
+    "referenceNumber": "TEST-DIRECT-002",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "21:00",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiR0Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJURVNULURJUkVDVC0wMDIiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIyMTowMCIsInN1YnRvdGFsIjoxMDAsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1782995599675": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "123456789",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "21:02",
+    "subtotal": 85,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIxMjM0NTY3ODkiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIyMTowMiIsInN1YnRvdGFsIjo4NSwiZGlzY291bnQiOjAsInRheCI6MH0="
+  },
+  "ORD-1782995839244": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "REF123456789",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "21:06",
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJSRUYxMjM0NTY3ODkiLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIyMTowNiIsInN1YnRvdGFsIjoxMDAsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1783000511220": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "1321654649687",
+    "paymentProofPath": "/uploads/payment-proofs/proof-1783000511200.jpg",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "22:23",
+    "subtotal": 255,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiIxMzIxNjU0NjQ5Njg3IiwicGF5bWVudFByb29mUGF0aCI6Ii91cGxvYWRzL3BheW1lbnQtcHJvb2ZzL3Byb29mLTE3ODMwMDA1MTEyMDAuanBnIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMjI6MjMiLCJzdWJ0b3RhbCI6MjU1LCJkaXNjb3VudCI6MCwidGF4IjowfQ=="
+  },
+  "ORD-1783002602911": {
+    "paymentMethod": "gcash",
+    "referenceNumber": "Q231313242",
+    "paymentProofPath": "/uploads/payment-proofs/proof-1783002602890.jpg",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "22:59",
+    "subtotal": 85,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoiZ2Nhc2giLCJyZWZlcmVuY2VOdW1iZXIiOiJRMjMxMzEzMjQyIiwicGF5bWVudFByb29mUGF0aCI6Ii91cGxvYWRzL3BheW1lbnQtcHJvb2ZzL3Byb29mLTE3ODMwMDI2MDI4OTAuanBnIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMjI6NTkiLCJzdWJ0b3RhbCI6ODUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1783003008123": {
+    "paymentMethod": "maya",
+    "referenceNumber": "Q2EEWQEQ",
+    "paymentProofPath": "/uploads/payment-proofs/proof-1783003008101.jpg",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "23:06",
+    "subtotal": 85,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IlEyRUVXUUVRIiwicGF5bWVudFByb29mUGF0aCI6Ii91cGxvYWRzL3BheW1lbnQtcHJvb2ZzL3Byb29mLTE3ODMwMDMwMDgxMDEuanBnIiwicGlja3VwRGF0ZSI6IjIwMjYtMDctMDIiLCJwaWNrdXBUaW1lIjoiMjM6MDYiLCJzdWJ0b3RhbCI6ODUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  },
+  "ORD-1783003220534": {
+    "paymentMethod": "maya",
+    "referenceNumber": "WAEXFDFSFE",
+    "paymentProofPath": "/uploads/payment-proofs/proof-1783003220517.jpg",
+    "pickupDate": "2026-07-02",
+    "pickupTime": "23:09",
+    "subtotal": 115,
+    "discount": 0,
+    "tax": 0,
+    "metadataNote": "__ORDER_META__eyJwYXltZW50TWV0aG9kIjoibWF5YSIsInJlZmVyZW5jZU51bWJlciI6IldBRVhGREZTRkUiLCJwYXltZW50UHJvb2ZQYXRoIjoiL3VwbG9hZHMvcGF5bWVudC1wcm9vZnMvcHJvb2YtMTc4MzAwMzIyMDUxNy5qcGciLCJwaWNrdXBEYXRlIjoiMjAyNi0wNy0wMiIsInBpY2t1cFRpbWUiOiIyMzowOSIsInN1YnRvdGFsIjoxMTUsImRpc2NvdW50IjowLCJ0YXgiOjB9"
+  }
+}

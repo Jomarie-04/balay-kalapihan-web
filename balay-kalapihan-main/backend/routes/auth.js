@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { supabase } from '../database.js';
 import { generateToken } from '../middleware.js';
 import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+import { generateResetCode, storeResetCode, verifyResetCode } from '../password-reset.js';
+import { sendResetCodeEmail } from '../email.js';
 
 const router = Router();
 
@@ -33,17 +36,61 @@ router.post('/signup', async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
-    const { data: newUser, error: insertError } = await supabase
-      .from('customers')
-      .insert({
-        username,
-        email,
-        full_name: fullName,
-        password: hashedPassword,
-        phone_number: phoneNumber || null
-      })
-      .select();
+    // Insert new user with timeout and retry logic
+    let newUser;
+    let insertError;
+
+    try {
+      // Try REST API with fresh client instance (sometimes helps with schema cache issues)
+      const freshSupabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_KEY
+      );
+
+      // First try with the main client
+      const { data: restData, error: restError } = await supabase
+        .from('customers')
+        .insert({
+          username,
+          email,
+          full_name: fullName,
+          password: hashedPassword,
+          phone_number: phoneNumber || null
+        })
+        .select();
+
+      if (!restError) {
+        newUser = restData;
+      } else if (restError.code === 'PGRST204') {
+        // Schema cache issue - try with fresh client instance
+        console.warn('⚠️  Schema cache issue detected, retrying with fresh Supabase client...');
+        
+        // Wait a moment and retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: retryData, error: retryError } = await freshSupabase
+          .from('customers')
+          .insert({
+            username,
+            email,
+            full_name: fullName,
+            password: hashedPassword,
+            phone_number: phoneNumber || null
+          })
+          .select();
+        
+        if (!retryError) {
+          newUser = retryData;
+        } else {
+          insertError = retryError;
+        }
+      } else {
+        insertError = restError;
+      }
+    } catch (err) {
+      console.error('Signup - Catch error:', err);
+      insertError = err;
+    }
 
     if (insertError) {
       console.error('Signup - Insert error:', insertError);
@@ -60,6 +107,100 @@ router.post('/signup', async (req, res) => {
     });
   } catch (err) {
     console.error('Signup - Catch error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Forgot password - step 1: send security code
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const { data: users, error: selectError } = await supabase
+      .from('customers')
+      .select('id, email')
+      .limit(100);
+
+    if (selectError) {
+      console.error('Forgot password - Select error:', selectError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    const matchingUser = users?.find((user) => user.email?.trim().toLowerCase() === normalizedEmail);
+
+    if (!matchingUser) {
+      return res.status(404).json({ error: 'No account found with that email address' });
+    }
+
+    const code = generateResetCode();
+    await storeResetCode(normalizedEmail, code);
+    await sendResetCodeEmail(normalizedEmail, code);
+
+    console.log(`Password reset code for ${normalizedEmail}: ${code}`);
+
+    res.json({ message: 'Verification code sent to your email', email: normalizedEmail });
+  } catch (err) {
+    console.error('Forgot password route error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Forgot password - step 2: verify code and change password
+router.post('/verify-reset-code', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'Email, verification code, and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const isValidCode = await verifyResetCode(normalizedEmail, code);
+
+    if (!isValidCode) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    const { data: users, error: selectError } = await supabase
+      .from('customers')
+      .select('id, email')
+      .limit(100);
+
+    if (selectError) {
+      console.error('Verify reset code - Select error:', selectError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    const matchingUser = users?.find((user) => user.email?.trim().toLowerCase() === normalizedEmail);
+
+    if (!matchingUser) {
+      return res.status(404).json({ error: 'No account found with that email address' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const { error: updateError } = await supabase
+      .from('customers')
+      .update({ password: hashedPassword })
+      .eq('id', matchingUser.id);
+
+    if (updateError) {
+      console.error('Verify reset code - Update error:', updateError);
+      return res.status(500).json({ error: 'Could not update password' });
+    }
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Verify reset code route error:', err);
     res.status(500).json({ error: err.message });
   }
 });

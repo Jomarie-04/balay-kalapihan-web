@@ -9,6 +9,7 @@
     "start": "cd balay-kalapihan-main && npm run preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.4"
+    "@supabase/supabase-js": "^2.105.4",
+    "pg": "^8.21.0"
   }
 }

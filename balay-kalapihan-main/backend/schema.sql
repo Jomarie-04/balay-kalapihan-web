@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
 -- Create orders table
 CREATE TABLE IF NOT EXISTS public.orders (
   id VARCHAR(255) PRIMARY KEY,
-  user_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
   customer VARCHAR(255) NOT NULL,
   items INTEGER NOT NULL,
   total INTEGER NOT NULL,
@@ -63,7 +62,6 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_customers_username ON public.customers(username);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON public.orders(customer);
-CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);

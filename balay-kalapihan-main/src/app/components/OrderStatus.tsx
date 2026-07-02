@@ -195,7 +195,7 @@ export function OrderStatus({
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {orders.map((order, index) => (
+          {[...orders].reverse().map((order, index) => (
             <div
               key={order.orderNumber}
               className="bg-card border border-border rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 shadow-md hover:shadow-lg transition-all duration-300 animate-slide-in overflow-hidden"

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { validatePaymentData } from '../../services/paymentVerification';
 
 interface PaymentModalProps {
   totalAmount: number;
@@ -7,9 +8,24 @@ interface PaymentModalProps {
   onConfirm: (
     paymentMethod: string,
     referenceNumber: string,
+    proofFile?: File,
   ) => void;
   onCancel: () => void;
 }
+
+// GCash and Maya account details for QR code generation
+const PAYMENT_ACCOUNTS = {
+  gcash: {
+    name: "Balay Kalapihan",
+    number: "09975407609",
+    qrCode: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=gcash://09975407609/BalayKalapihan",
+  },
+  maya: {
+    name: "Balay Kalapihan",
+    number: "09975407609",
+    qrCode: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=maya://09975407609/BalayKalapihan",
+  },
+};
 
 export function PaymentModal({
   totalAmount,
@@ -22,31 +38,37 @@ export function PaymentModal({
     "gcash" | "maya" | null
   >(null);
   const [referenceNumber, setReferenceNumber] = useState("");
-  const [isPaid, setIsPaid] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handlePayNow = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedMethod) return;
-
-    setIsProcessing(true);
-    
-
-    // Generate reference number automatically
-    const autoRefNumber = Math.random().toString().slice(2, 15);
-    setReferenceNumber(autoRefNumber);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsPaid(true);
-    }, 2000);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setProofFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProofPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleConfirmPayment = (e: React.FormEvent) => {
+  const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedMethod && referenceNumber && isPaid) {
-      onConfirm(selectedMethod, referenceNumber);
+    if (!selectedMethod || !referenceNumber || !proofFile) {
+      alert("Please complete all fields and upload proof of payment");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      onConfirm(selectedMethod, referenceNumber, proofFile);
+    } catch (error) {
+      console.error("Payment submission error:", error);
+      alert("Failed to submit payment for verification");
+      setIsSubmitting(false);
     }
   };
 
@@ -58,7 +80,7 @@ export function PaymentModal({
             className="text-2xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Payment
+            Manual Payment
           </h3>
           <button
             onClick={onCancel}
@@ -99,10 +121,11 @@ export function PaymentModal({
           </div>
         </div>
 
-        <form onSubmit={!isPaid ? handlePayNow : handleConfirmPayment}>
+        <form onSubmit={handleSubmitPayment}>
+          {/* Payment Method Selection */}
           <div className="mb-6">
-            <label className="block text-sm mb-3 text-foreground/80">
-              Select Payment Method
+            <label className="block text-sm mb-3 text-foreground/80 font-medium">
+              Step 1: Select Payment Method
             </label>
             <div className="grid grid-cols-2 gap-4">
               <button
@@ -146,49 +169,126 @@ export function PaymentModal({
           </div>
 
           {selectedMethod && (
-            <div className="mb-6 animate-slide-down">
-              {!isProcessing && !isPaid ? (
-                <div className="p-4 bg-accent/20 border border-accent/30 rounded-lg mb-4">
-                  <p className="text-sm mb-3 font-medium text-foreground">
-                    Payment Summary
+            <div className="mb-6 space-y-4 animate-slide-down">
+              {/* Step 2: QR Code and Account Details */}
+              <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
+                <p className="text-sm font-medium text-foreground mb-3">
+                  Step 2: Scan QR Code or Send to:
+                </p>
+                
+                {/* QR Code */}
+                <div className="flex justify-center mb-4 p-3 bg-white rounded-lg">
+                  <img 
+                    src={PAYMENT_ACCOUNTS[selectedMethod].qrCode}
+                    alt={`${selectedMethod.toUpperCase()} QR Code`}
+                    className="w-40 h-40"
+                  />
+                </div>
+
+                {/* Account Details */}
+                <div className="bg-muted/50 rounded-lg p-3 text-center text-sm">
+                  <p className="text-muted-foreground mb-1">Recipient</p>
+                  <p className="font-semibold text-foreground mb-2">
+                    {PAYMENT_ACCOUNTS[selectedMethod].name}
                   </p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex justify-between">
-                      <span>Amount:</span>
-                      <span className="font-medium text-foreground">₱{totalAmount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Method:</span>
-                      <span className="font-medium text-foreground uppercase">{selectedMethod}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Recipient:</span>
-                      <span className="font-medium text-foreground">Balay Kalapihan</span>
-                    </div>
-                  </div>
+                  <p className="text-muted-foreground mb-1">Account Number</p>
+                  <p className="font-mono font-bold text-accent text-lg">
+                    {PAYMENT_ACCOUNTS[selectedMethod].number}
+                  </p>
+                  <p className="text-muted-foreground text-xs mt-2">
+                    Amount: ₱{totalAmount}
+                  </p>
                 </div>
-              ) : isProcessing ? (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg mb-4 text-center">
-                  <div className="flex items-center justify-center mb-3">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <p className="text-sm font-medium text-foreground">Processing Payment...</p>
-                  <p className="text-xs text-muted-foreground mt-2">Opening {selectedMethod.toUpperCase()} app</p>
+              </div>
+
+              {/* Step 3: Reference Number */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Step 3: Enter Reference Number
+                </label>
+                <input
+                  type="text"
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value.toUpperCase())}
+                  placeholder="Enter transaction reference (optional)"
+                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  From your {selectedMethod.toUpperCase()} receipt or transaction details
+                </p>
+              </div>
+
+              {/* Step 4: Upload Proof of Payment */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Step 4: Upload Proof of Payment
+                </label>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-primary/30 rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+                >
+                  {proofPreview ? (
+                    <div className="space-y-2">
+                      <img 
+                        src={proofPreview} 
+                        alt="Proof preview"
+                        className="w-32 h-32 object-cover rounded-lg mx-auto"
+                      />
+                      <p className="text-sm font-medium text-foreground">
+                        {proofFile?.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setProofFile(null);
+                          setProofPreview("");
+                        }}
+                        className="text-xs text-destructive hover:text-destructive/80"
+                      >
+                        Change image
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <svg
+                        className="w-8 h-8 mx-auto text-muted-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <div className="text-sm">
+                        <p className="text-foreground font-medium">Click to upload screenshot</p>
+                        <p className="text-muted-foreground text-xs">or drag and drop</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm font-medium text-green-500">Payment Confirmed!</span>
-                  </div>
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <p>Reference: <span className="font-mono text-foreground font-medium">{referenceNumber}</span></p>
-                    <p>Amount: <span className="font-medium text-foreground">₱{totalAmount}</span></p>
-                  </div>
-                </div>
-              )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upload a screenshot of your payment confirmation
+                </p>
+              </div>
+
+              {/* Status Message */}
+              <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-xs text-blue-700 font-medium">
+                  ℹ️ Your payment will be verified by our admin team within 5-10 minutes
+                </p>
+              </div>
             </div>
           )}
 
@@ -196,26 +296,24 @@ export function PaymentModal({
             <button
               type="button"
               onClick={onCancel}
-              disabled={isProcessing}
+              disabled={isSubmitting}
               className="flex-1 px-6 py-3 border border-border rounded-lg hover:bg-muted transition-all duration-300 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={!selectedMethod}
+              disabled={!selectedMethod || !referenceNumber || !proofFile || isSubmitting}
               className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {isProcessing ? (
+              {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  Processing...
+                  Submitting...
                 </span>
-              ) : isPaid ? (
-                "Complete Order"
               ) : (
-                `Pay ₱${totalAmount} via ${selectedMethod?.toUpperCase()}`
+                "Submit for Verification"
               )}
             </button>
           </div>

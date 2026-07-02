@@ -4,12 +4,41 @@ interface ShopStatusIndicatorProps {
   className?: string;
 }
 
+interface AdminStatus {
+  status: 'open' | 'closed';
+  lastChanged: string;
+}
+
 export function ShopStatusIndicator({ className = '' }: ShopStatusIndicatorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [lastChangedTime, setLastChangedTime] = useState<string>('');
 
   useEffect(() => {
     const checkShopStatus = () => {
+      // Check for admin-set status first
+      const adminStatusStr = localStorage.getItem('adminShopStatus');
+      if (adminStatusStr) {
+        try {
+          const adminStatus: AdminStatus = JSON.parse(adminStatusStr);
+          const isAdminOpen = adminStatus.status === 'open';
+          setIsOpen(isAdminOpen);
+          
+          const lastChanged = new Date(adminStatus.lastChanged);
+          setLastChangedTime(lastChanged.toLocaleTimeString());
+          
+          if (isAdminOpen) {
+            setStatusMessage('Open (Admin)');
+          } else {
+            setStatusMessage('Closed (Admin)');
+          }
+          return;
+        } catch (e) {
+          console.error('Error parsing admin status:', e);
+        }
+      }
+
+      // Fallback to business hours if no admin override
       const now = new Date();
       const day = now.getDay(); // 0 = Sunday, 6 = Saturday
       const hours = now.getHours();
@@ -32,12 +61,14 @@ export function ShopStatusIndicator({ className = '' }: ShopStatusIndicatorProps
       if (!todaySchedule) {
         setIsOpen(false);
         setStatusMessage('Closed today');
+        setLastChangedTime('');
         return;
       }
 
       const { open, close } = todaySchedule;
       const isCurrentlyOpen = currentTime >= open && currentTime < close;
       setIsOpen(isCurrentlyOpen);
+      setLastChangedTime('');
 
       if (isCurrentlyOpen) {
         // Calculate time until closing
@@ -78,9 +109,21 @@ export function ShopStatusIndicator({ className = '' }: ShopStatusIndicatorProps
     };
 
     checkShopStatus();
-    const interval = setInterval(checkShopStatus, 60000); // Check every minute
+    
+    // Check every second for real-time updates from admin changes
+    const interval = setInterval(checkShopStatus, 1000);
 
-    return () => clearInterval(interval);
+    // Listen for storage changes from other tabs or admin dashboard
+    const handleStorageChange = () => {
+      checkShopStatus();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   return (
@@ -104,6 +147,7 @@ export function ShopStatusIndicator({ className = '' }: ShopStatusIndicatorProps
         </span>
         <span className="text-[10px] sm:text-xs text-muted-foreground">
           {statusMessage}
+          {lastChangedTime && ` (${lastChangedTime})`}
         </span>
       </div>
     </div>

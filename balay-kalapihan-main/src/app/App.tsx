@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Login, UserData } from "./components/Login";
+import { CustomerLogin, CustomerUserData } from "./components/CustomerLogin";
+import { AdminLogin, AdminUserData } from "./components/AdminLogin";
+import { PortalSelector } from "./components/PortalSelector";
 import { Dashboard } from "./components/Dashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { api } from "../services/api";
@@ -9,11 +11,19 @@ const ADMIN_SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes for admin
 const USER_SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes for regular users
 const INACTIVITY_WARNING_MS = SESSION_TIMEOUT_MS - 5 * 60 * 1000; // Warning 5 minutes before logout
 
+export interface UserData {
+  id?: number;
+  username: string;
+  email: string;
+  fullName: string;
+  phoneNumber?: string;
+  isAdmin?: boolean;
+}
+
 export default function App() {
   const [user, setUser] = useState<string | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(
-    null,
-  );
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [selectedPortal, setSelectedPortal] = useState<'customer' | 'admin' | null>(null);
   const [loginTime, setLoginTime] = useState<number | null>(null);
   const [lastActivityTime, setLastActivityTime] = useState<number | null>(null);
   const [showSessionWarning, setShowSessionWarning] = useState(false);
@@ -26,14 +36,17 @@ export default function App() {
       api.setToken(adminToken);
       // Set user to admin so AdminDashboard is shown
       setUser("admin");
+      setSelectedPortal("admin");
       setUserData({
         id: 999,
         username: "admin",
         email: "admin@balaykalapihan.com",
         fullName: "Administrator",
+        isAdmin: true,
       });
       setLoginTime(Date.now());
       setLastActivityTime(Date.now());
+      return;
     }
 
     // Restore regular user session
@@ -43,6 +56,7 @@ export default function App() {
       api.setToken(userToken);
       const userData = JSON.parse(storedUserData);
       setUser(userData.username);
+      setSelectedPortal("customer");
       setUserData(userData);
       setLoginTime(Date.now());
       setLastActivityTime(Date.now());
@@ -96,31 +110,43 @@ export default function App() {
     return () => clearInterval(timeout);
   }, [user, loginTime, lastActivityTime]);
 
-  const handleLogin = (username: string, data: UserData) => {
+  const handleCustomerLogin = (username: string, data: CustomerUserData) => {
     const now = Date.now();
     setUser(username);
-    setUserData(data);
+    setUserData({
+      ...data,
+      isAdmin: false,
+    });
+    setLoginTime(now);
+    setLastActivityTime(now);
+  };
+
+  const handleAdminLogin = (data: AdminUserData) => {
+    const now = Date.now();
+    setUser("admin");
+    setUserData({
+      ...data,
+      isAdmin: true,
+    });
     setLoginTime(now);
     setLastActivityTime(now);
     
     // Store login session info for security tracking
-    if (username === "admin") {
-      const adminSessions = JSON.parse(
-        localStorage.getItem("adminSessions") || "[]"
-      );
-      adminSessions.push({
-        loginTime: now,
-        loginDate: new Date(now).toLocaleString(),
-        sessionDuration: ADMIN_SESSION_TIMEOUT_MS,
-      });
-      
-      // Keep only last 10 sessions
-      if (adminSessions.length > 10) {
-        adminSessions.shift();
-      }
-      
-      localStorage.setItem("adminSessions", JSON.stringify(adminSessions));
+    const adminSessions = JSON.parse(
+      localStorage.getItem("adminSessions") || "[]"
+    );
+    adminSessions.push({
+      loginTime: now,
+      loginDate: new Date(now).toLocaleString(),
+      sessionDuration: ADMIN_SESSION_TIMEOUT_MS,
+    });
+    
+    // Keep only last 10 sessions
+    if (adminSessions.length > 10) {
+      adminSessions.shift();
     }
+    
+    localStorage.setItem("adminSessions", JSON.stringify(adminSessions));
   };
 
   const handleLogout = () => {
@@ -160,11 +186,38 @@ export default function App() {
     setShowSessionWarning(false);
   };
 
-  // Check if user is admin (username is "admin")
-  const isAdmin = user === "admin";
+  // Check if user is admin
+  const isAdmin = user === "admin" && userData?.isAdmin;
+
+  const handleBackToPortalSelect = () => {
+    setSelectedPortal(null);
+  };
 
   return (
     <div className="size-full">
+      {/* Show Portal Selector if no portal is selected */}
+      {!selectedPortal && (
+        <PortalSelector onSelectPortal={setSelectedPortal} />
+      )}
+
+      {/* Show Login Forms if portal is selected but not logged in */}
+      {selectedPortal && !user && userData === null ? (
+        <>
+          {selectedPortal === "customer" ? (
+            <CustomerLogin 
+              onLogin={handleCustomerLogin}
+              onBackToPortalSelect={handleBackToPortalSelect}
+            />
+          ) : (
+            <AdminLogin 
+              onLogin={handleAdminLogin}
+              onBackToPortalSelect={handleBackToPortalSelect}
+            />
+          )}
+        </>
+      ) : null}
+
+      {/* Show Dashboards if logged in */}
       {user && userData ? (
         <>
           {/* Session Warning Modal */}
@@ -204,9 +257,7 @@ export default function App() {
             />
           )}
         </>
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
+      ) : null}
     </div>
   );
 }

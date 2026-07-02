@@ -126,6 +126,25 @@ export default async function handler(req, res) {
         await supabase.from('order_items').insert(itemsToInsert);
       }
 
+      try {
+        const response = await fetch(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host || 'localhost:3000'}/api/admin/notifications`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'new_order',
+            message: `New order #${orderId} from ${customer} - ₱${Number(total || 0).toLocaleString('en-PH')}`,
+            orderNumber: orderId,
+            orderStatus: 'pending',
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Admin notification dispatch failed:', await response.text());
+        }
+      } catch (notificationError) {
+        console.error('Admin notification dispatch error:', notificationError);
+      }
+
       return res.status(201).json({
         message: 'Order created successfully',
         orderId,

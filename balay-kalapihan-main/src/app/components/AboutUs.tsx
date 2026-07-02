@@ -1,8 +1,22 @@
+import { useEffect, useState } from 'react';
+
 interface AboutUsProps {
   onBack: () => void;
 }
 
+const storyImages = Array.from({ length: 7 }, (_, index) => `/images/enhanced-Story${index + 1}.jpg`);
+
 export function AboutUs({ onBack }: AboutUsProps) {
+  const [activeStoryImage, setActiveStoryImage] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveStoryImage((current) => (current + 1) % storyImages.length);
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen pb-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -44,84 +58,79 @@ export function AboutUs({ onBack }: AboutUsProps) {
           <h2 className="text-2xl sm:text-3xl mb-6" style={{ fontFamily: 'var(--font-display)' }}>
             Visit Our Location
           </h2>
+          <div className="rounded-3xl overflow-hidden shadow-lg border border-border h-[420px] sm:h-[520px] mb-6">
+            <iframe
+              title="Balay Kalapihan Location"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3911.024766453065!2d123.3112!3d9.3045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33afa32fde0e8175%3A0x123456789!2s259%20Larena%20Drive%2C%20Dumaguete%20City%2C%206200!5e0!3m2!1sen!2sph!4v1234567890"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            {/* Map */}
-            <div className="rounded-2xl overflow-hidden shadow-lg border border-border h-80 md:h-96">
-              <iframe
-                title="Balay Kalapihan Location"
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3911.024766453065!2d123.3112!3d9.3045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33afa32fde0e8175%3A0x123456789!2s259%20Larena%20Drive%2C%20Dumaguete%20City%2C%206200!5e0!3m2!1sen!2sph!4v1234567890"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+            <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-lg">
+              <h3 className="text-xl sm:text-2xl mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+                Our Pickup Location
+              </h3>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Address</p>
+                  <p className="text-base sm:text-lg font-medium">
+                    259 Larena Drive
+                    <br />
+                    Dumaguete City, 6200
+                    <br />
+                    Philippines
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Phone</p>
+                  <p className="text-base sm:text-lg font-medium">0961-842-5718</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Email</p>
+                  <p className="text-base sm:text-lg font-medium">info@balaykalapihan.com</p>
+                </div>
+                <a
+                  href="https://maps.app.goo.gl/W3oi7Am4cr74SZAdA"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Get Directions
+                </a>
+              </div>
             </div>
 
-            {/* Location Description */}
-            <div className="space-y-6">
-              <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-lg">
-                <h3 className="text-xl sm:text-2xl mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                  Our Pickup Location
-                </h3>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Address</p>
-                    <p className="text-base sm:text-lg font-medium">
-                      259 Larena Drive
-                      <br />
-                      Dumaguete City, 6200
-                      <br />
-                      Philippines
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Phone</p>
-                    <p className="text-base sm:text-lg font-medium"> 0961-842-5718</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Email</p>
-                    <p className="text-base sm:text-lg font-medium">info@balaykalapihan.com</p>
-                  </div>
-                  <a
-                    href="https://maps.app.goo.gl/W3oi7Am4cr74SZAdA"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Get Directions
-                  </a>
-                </div>
-              </div>
-
-              {/* Parking & Accessibility Info */}
-              <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-lg">
-                <h3 className="text-lg sm:text-xl mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                  <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Parking & Accessibility
-                </h3>
-                <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    Free parking available for customers
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    Wheelchair accessible entrance
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary font-bold">•</span>
-                    Easy loading/unloading area for pickups
-                  </li>
-                </ul>
-              </div>
+            <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-lg">
+              <h3 className="text-lg sm:text-xl mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Parking & Accessibility
+              </h3>
+              <ul className="space-y-3 text-sm sm:text-base text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  Free parking available for customers
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  Wheelchair accessible entrance
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  Easy loading/unloading area for pickups
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -140,6 +149,34 @@ export function AboutUs({ onBack }: AboutUsProps) {
               Every coffee and specialty drink we craft is a tribute to the rich flavors of our islands, blending time-honored traditions with modern techniques. From the earthy notes of our local beans to our refreshing signature blends, each drink is prepared with love and care.
               </p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">For us, a beverage is more than just a refreshment—it's a connection to our roots, our families, and our most cherished memories. At Balay Kalapihan, we invite you to find home in every sip.</p>
+
+            <div className="mt-6">
+              <div className="relative overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm">
+                <img
+                  key={storyImages[activeStoryImage]}
+                  src={storyImages[activeStoryImage]}
+                  alt={`Balay Kalapihan story ${activeStoryImage + 1}`}
+                  className="h-56 w-full object-cover transition-opacity duration-500 sm:h-72"
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="mt-3 flex justify-center">
+                <div className="flex gap-2">
+                  {storyImages.map((_, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setActiveStoryImage(index)}
+                      aria-label={`Show story image ${index + 1}`}
+                      className={`h-2.5 rounded-full transition-all ${
+                        activeStoryImage === index ? 'w-6 bg-primary' : 'w-2.5 bg-muted-foreground/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Our Mission */}

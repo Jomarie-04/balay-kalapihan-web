@@ -37,6 +37,12 @@ export function Login({ onLogin }: LoginProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [resetStep, setResetStep] = useState<"email" | "code">("email");
   const [showResetMessage, setShowResetMessage] =
     useState(false);
   const [showSignupSuccess, setShowSignupSuccess] =
@@ -328,15 +334,75 @@ export function Login({ onLogin }: LoginProps) {
 
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      // Simulate sending reset email
-      setShowResetMessage(true);
-      setTimeout(() => {
-        setShowResetMessage(false);
-        setMode("login");
-        setEmail("");
-      }, 3000);
+    setLoginError(null);
+
+    const form = e.currentTarget as HTMLFormElement;
+    const emailInput = form.elements.namedItem("reset-email") as HTMLInputElement | null;
+    const resetCodeInput = form.elements.namedItem("reset-code") as HTMLInputElement | null;
+    const newPasswordInput = form.elements.namedItem("reset-new-password") as HTMLInputElement | null;
+    const confirmNewPasswordInput = form.elements.namedItem("reset-confirm-password") as HTMLInputElement | null;
+
+    const currentEmail = emailInput?.value.trim() || email;
+    const currentResetCode = resetCodeInput?.value.trim() || resetCode;
+    const currentNewPassword = newPasswordInput?.value || newPassword;
+    const currentConfirmNewPassword = confirmNewPasswordInput?.value || confirmNewPassword;
+
+    if (resetStep === "email") {
+      if (!currentEmail) {
+        setLoginError("Please enter your email");
+        return;
+      }
+
+      setEmail(currentEmail);
+
+      api.forgotPassword(currentEmail)
+        .then(() => {
+          setResetStep("code");
+          setShowResetMessage(true);
+          setTimeout(() => setShowResetMessage(false), 3000);
+        })
+        .catch((error: any) => {
+          setLoginError(error?.message || "Unable to send verification code");
+        });
+      return;
     }
+
+    if (!currentResetCode || !currentNewPassword || !currentConfirmNewPassword) {
+      setLoginError("Please fill in all fields");
+      return;
+    }
+
+    if (currentNewPassword.length < 6) {
+      setLoginError("Password must be at least 6 characters long");
+      return;
+    }
+
+    if (currentNewPassword !== currentConfirmNewPassword) {
+      setLoginError("Passwords do not match");
+      return;
+    }
+
+    setEmail(currentEmail);
+    setResetCode(currentResetCode);
+    setNewPassword(currentNewPassword);
+    setConfirmNewPassword(currentConfirmNewPassword);
+
+    api.verifyResetCode(currentEmail, currentResetCode, currentNewPassword)
+      .then(() => {
+        setShowResetMessage(true);
+        setTimeout(() => {
+          setShowResetMessage(false);
+          setMode("login");
+          setResetStep("email");
+          setEmail("");
+          setResetCode("");
+          setNewPassword("");
+          setConfirmNewPassword("");
+        }, 3000);
+      })
+      .catch((error: any) => {
+        setLoginError(error?.message || "Invalid or expired verification code");
+      });
   };
 
   return (
@@ -414,7 +480,9 @@ export function Login({ onLogin }: LoginProps) {
           {showResetMessage && (
             <div className="mb-6 p-4 bg-primary/10 border border-primary/30 rounded-lg animate-slide-down">
               <p className="text-sm text-center text-primary">
-                Password reset link has been sent to your email!
+                {resetStep === "email"
+                  ? "Verification code sent to your email!"
+                  : "Password updated successfully!"}
               </p>
             </div>
           )}
@@ -698,25 +766,117 @@ export function Login({ onLogin }: LoginProps) {
                   htmlFor="reset-email"
                   className="block text-sm text-foreground/80"
                 >
-                  Email Address
+                  {resetStep === "email" ? "Email Address" : "Verification Code"}
                 </label>
-                <input
-                  id="reset-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 sm:py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 hover:border-primary/30 text-sm sm:text-base"
-                  placeholder="Enter your email"
-                  required
-                />
+                {resetStep === "email" ? (
+                  <input
+                    id="reset-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2.5 sm:py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 hover:border-primary/30 text-sm sm:text-base"
+                    placeholder="Enter your email"
+                    required
+                  />
+                ) : (
+                  <input
+                    id="reset-code"
+                    type="text"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    className="w-full px-4 py-2.5 sm:py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 hover:border-primary/30 text-sm sm:text-base"
+                    placeholder="Enter 6-digit code"
+                    required
+                  />
+                )}
               </div>
+
+              {resetStep === "code" && (
+                <>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="reset-password"
+                      className="block text-sm text-foreground/80"
+                    >
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="reset-password"
+                        name="reset-new-password"
+                        type={showResetPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-4 py-2.5 sm:py-3 pr-12 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 hover:border-primary/30 text-sm sm:text-base"
+                        placeholder="Choose a new password"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowResetPassword(!showResetPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showResetPassword ? (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="confirm-reset-password"
+                      className="block text-sm text-foreground/80"
+                    >
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="confirm-reset-password"
+                        name="reset-confirm-password"
+                        type={showResetConfirmPassword ? "text" : "password"}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        className="w-full px-4 py-2.5 sm:py-3 pr-12 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 hover:border-primary/30 text-sm sm:text-base"
+                        placeholder="Confirm your new password"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showResetConfirmPassword ? (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <button
                 type="submit"
                 className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Send Reset Link
+                {resetStep === "email" ? "Send Verification Code" : "Reset Password"}
               </button>
             </form>
           )}

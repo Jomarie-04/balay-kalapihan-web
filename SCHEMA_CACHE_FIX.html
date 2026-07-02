@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balay Kalapihan - Fix Schema Cache</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            border-radius: 6px;
+        }
+        .status-icon {
+            font-size: 24px;
+        }
+        .status-text {
+            flex: 1;
+        }
+        .status-text h3 {
+            margin: 0 0 5px 0;
+            color: #0284c7;
+        }
+        .status-text p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .steps {
+            margin: 30px 0;
+        }
+        .step {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .step h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .step p {
+            margin: 10px 0;
+            color: #555;
+            line-height: 1.6;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .code-block button {
+            float: right;
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .code-block button:hover {
+            background: #764ba2;
+        }
+        .note {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .note strong {
+            color: #d97706;
+        }
+        .success {
+            background: #dcfce7;
+            border-left: 4px solid #22c55e;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .success strong {
+            color: #15803d;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Balay Kalapihan - Fix Supabase Schema Cache</h1>
+        
+        <div class="status">
+            <div class="status-icon">⚠️</div>
+            <div class="status-text">
+                <h3>Schema Cache Out of Sync</h3>
+                <p>Your Supabase database tables exist, but the REST API cache doesn't recognize the 'full_name' column. This needs a manual fix in SQL Editor.</p>
+            </div>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Open Supabase Dashboard</h3>
+                <p>Visit: <a href="https://app.supabase.com" target="_blank">https://app.supabase.com</a></p>
+                <p>Select your project: <strong>balay-kalapihan</strong></p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Open SQL Editor</h3>
+                <p>In the left sidebar, click <strong>"SQL Editor"</strong></p>
+                <p>Click the <strong>"+ New"</strong> button to create a new query</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Drop Existing Tables</h3>
+                <p>Copy and paste this SQL in the query editor:</p>
+                <div class="code-block">
+<pre>DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.order_items CASCADE;
+DROP TABLE IF EXISTS public.orders CASCADE;
+DROP TABLE IF EXISTS public.menu_items CASCADE;
+DROP TABLE IF EXISTS public.customers CASCADE;</pre>
+                    <button onclick="copyCode(this)">Copy</button>
+                </div>
+                <p>Click the <strong>"Run"</strong> button (green button in the top right of the query editor)</p>
+                <p>✓ Wait for it to complete - you should see a success message</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Create Fresh Tables</h3>
+                <p>Create <strong>another</strong> new query and copy this SQL:</p>
+                <div class="code-block">
+<pre>-- Create customers table
+CREATE TABLE IF NOT EXISTS public.customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  phone_number VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create menu_items table
+CREATE TABLE IF NOT EXISTS public.menu_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  price INTEGER NOT NULL,
+  status VARCHAR(50) DEFAULT 'available',
+  sales INTEGER DEFAULT 0,
+  description TEXT,
+  image VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create orders table
+CREATE TABLE IF NOT EXISTS public.orders (
+  id VARCHAR(255) PRIMARY KEY,
+  customer VARCHAR(255) NOT NULL,
+  items INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending',
+  time VARCHAR(50),
+  phone_number VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create order_items table
+CREATE TABLE IF NOT EXISTS public.order_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id VARCHAR(255) REFERENCES public.orders(id) ON DELETE CASCADE,
+  menu_item_id UUID REFERENCES public.menu_items(id) ON DELETE SET NULL,
+  quantity INTEGER NOT NULL,
+  price INTEGER NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  type VARCHAR(50),
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_customers_username ON public.customers(username);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON public.customers(email);
+CREATE INDEX IF NOT EXISTS idx_orders_customer ON public.orders(customer);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);</pre>
+                    <button onclick="copyCode(this)">Copy</button>
+                </div>
+                <p>Click <strong>"Run"</strong> again</p>
+                <p>✓ Wait for completion - all tables should be created fresh</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <h3>Restart Your Application</h3>
+                <p>Go back to your terminal and:</p>
+                <div class="code-block">
+<pre>cd backend
+node server.js</pre>
+                </div>
+                <p>✓ Server should start without errors</p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">6</div>
+                <h3>Test Signup</h3>
+                <p>Go to: <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></p>
+                <p>Click <strong>"Create Account"</strong></p>
+                <p>Fill in the form and try signing up</p>
+                <p>✓ It should work now!</p>
+            </div>
+        </div>
+
+        <div class="success">
+            <strong>✓ Success!</strong> Once you complete these steps, your signup feature will be fully operational and your system will be ready to use!
+        </div>
+
+        <div class="note">
+            <strong>⏱️ Time to complete:</strong> About 5 minutes
+        </div>
+    </div>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.parentElement.textContent.replace('Copy', '').trim();
+            navigator.clipboard.writeText(codeBlock).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#22c55e';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#667eea';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
