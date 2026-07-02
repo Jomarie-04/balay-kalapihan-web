@@ -33,6 +33,8 @@ interface PendingVerification {
  * @param data Payment verification data to validate
  * @returns Validation result with error message if invalid
  */
+const apiBaseUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:5000/api' : '/api');
+
 export function validatePaymentData(data: PaymentVerificationData): { valid: boolean; error?: string } {
   // Validate payment method
   if (!data.paymentMethod || !['gcash', 'maya'].includes(data.paymentMethod)) {
@@ -83,7 +85,7 @@ export async function uploadPaymentProof(file: File): Promise<PaymentVerificatio
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/payment-proof-upload', {
+    const response = await fetch(`${apiBaseUrl}/payment-proof-upload`, {
       method: 'POST',
       body: formData,
     });
@@ -123,7 +125,7 @@ export async function submitPaymentVerification(
   proofFilePath?: string
 ): Promise<PaymentVerificationResponse> {
   try {
-    const response = await fetch('/api/orders', {
+    const response = await fetch(`${apiBaseUrl}/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,7 +168,7 @@ export async function submitPaymentVerification(
  */
 export async function fetchPendingVerifications(adminToken: string): Promise<PendingVerification[]> {
   try {
-    const response = await fetch('/api/admin/payment-verifications', {
+    const response = await fetch(`${apiBaseUrl}/admin/payment-verifications`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
       },
@@ -195,7 +197,7 @@ export async function approvePaymentVerification(
   adminToken: string
 ): Promise<PaymentVerificationResponse> {
   try {
-    const response = await fetch(`/api/admin/payment-verifications/${orderId}/approve`, {
+    const response = await fetch(`${apiBaseUrl}/admin/payment-verifications/${orderId}/approve`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -240,7 +242,7 @@ export async function rejectPaymentVerification(
   adminToken: string
 ): Promise<PaymentVerificationResponse> {
   try {
-    const response = await fetch(`/api/admin/payment-verifications/${orderId}/reject`, {
+    const response = await fetch(`${apiBaseUrl}/admin/payment-verifications/${orderId}/reject`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

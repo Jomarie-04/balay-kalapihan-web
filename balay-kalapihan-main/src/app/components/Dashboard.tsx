@@ -1092,7 +1092,7 @@ export function Dashboard({
         formData.append('orderNumber', orderNumber);
         
         try {
-          const uploadResponse = await fetch('/api/payment-proof-upload', {
+const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:5000/api' : '/api')}/payment-proof-upload`, {
             method: 'POST',
             body: formData,
           });

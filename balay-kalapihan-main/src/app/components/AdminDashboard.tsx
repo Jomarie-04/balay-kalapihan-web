@@ -348,9 +348,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
+  const apiBaseUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:5000/api' : '/api');
+
   const approvePayment = async (orderId: string) => {
     try {
-      const response = await fetch(`/api/admin/payment-verifications/${orderId}/approve`, {
+      const response = await fetch(`${apiBaseUrl}/admin/payment-verifications/${orderId}/approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -373,7 +375,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const rejectPayment = async (orderId: string, reason: string) => {
     try {
-      const response = await fetch(`/api/admin/payment-verifications/${orderId}/reject`, {
+      const response = await fetch(`${apiBaseUrl}/admin/payment-verifications/${orderId}/reject`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
